@@ -1,4 +1,3 @@
-chrome.exe --disable-web-security --user-data-dir="C:/temp"
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -6,6 +5,11 @@ chrome.exe --disable-web-security --user-data-dir="C:/temp"
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>قيمني — دليلك للأكل في مصر</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDKs (بدون type=module) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -23,8 +27,7 @@ input,textarea,select{font-family:'Cairo',sans-serif}
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px}
 
-/* NAV */
-nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex;justify-content:space-between;align-items:center;background:rgba(9,8,10,.9);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex;justify-content:space-between;align-items:center;background:rgba(9,8,10,.93);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
 .logo{display:flex;align-items:center;gap:.6rem;cursor:pointer}
 .logo-icon{width:34px;height:34px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
 .logo-text{font-size:1.4rem;font-weight:900}
@@ -33,15 +36,17 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .nav-search:focus-within{border-color:rgba(245,200,66,.4)}
 .nav-search input{background:none;border:none;outline:none;color:var(--text);font-size:.83rem;width:100%}
 .nav-search input::placeholder{color:var(--text-muted)}
-.search-btn{background:var(--gold);border:none;color:#09080A;width:28px;height:28px;border-radius:50px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .nav-acts{display:flex;gap:.6rem;align-items:center}
 .nbtn{display:flex;align-items:center;gap:.35rem;background:var(--s2);border:1px solid var(--border);color:var(--text-dim);padding:.4rem .9rem;border-radius:50px;font-size:.78rem;font-weight:600;transition:all .25s}
 .nbtn:hover{border-color:var(--border2);color:var(--text)}
 .nbtn.gold{background:var(--gold);color:#09080A;border-color:var(--gold);font-weight:700}
 .nbtn.gold:hover{background:var(--gold2)}
 .wcount{background:var(--red);color:#fff;width:16px;height:16px;border-radius:50%;font-size:.6rem;display:flex;align-items:center;justify-content:center;font-weight:900}
+.fb-status{display:inline-flex;align-items:center;gap:.35rem;font-size:.68rem;padding:.2rem .6rem;border-radius:50px}
+.fb-ok{background:rgba(61,214,140,.1);color:var(--green)}
+.fb-err{background:rgba(255,87,87,.1);color:var(--red)}
+.fb-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
 
-/* HERO */
 .hero{padding:7rem 2rem 2.5rem;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;position:relative}
 .hero-glow{position:absolute;top:-80px;right:-80px;width:450px;height:450px;border-radius:50%;background:radial-gradient(circle,rgba(155,109,255,.1) 0%,transparent 70%);pointer-events:none}
 .hero-pill{display:inline-flex;align-items:center;gap:.5rem;background:var(--purple-dim);border:1px solid rgba(155,109,255,.25);color:var(--purple);padding:.3rem .9rem;border-radius:50px;font-size:.72rem;font-weight:700;margin-bottom:1.2rem}
@@ -60,7 +65,6 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .hbtn.outline{background:transparent;color:var(--text);border:1px solid var(--border2)}
 .hbtn.outline:hover{border-color:var(--gold);color:var(--gold)}
 
-/* MOOD CARD */
 .mood-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:1.4rem;position:relative;overflow:hidden}
 .mood-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--gold),#FF6B9D)}
 .mood-title{font-size:.93rem;font-weight:700;margin-bottom:.25rem}
@@ -73,12 +77,11 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .mbtn-lbl{font-size:.68rem;font-weight:600;color:var(--text-dim)}
 .mbtn.on .mbtn-lbl{color:var(--gold)}
 .mood-res{margin-top:.9rem;padding:.8rem;background:var(--s2);border-radius:12px;border:1px solid var(--border);display:none}
-.mood-res.show{display:block;animation:fadeUp .3s ease}
+.mood-res.show{display:block}
 .mood-res-lbl{font-size:.7rem;color:var(--text-muted);margin-bottom:.4rem}
 .mood-sug{font-size:.85rem;font-weight:700;color:var(--gold);cursor:pointer;display:flex;align-items:center;gap:.4rem}
 
-/* TRENDING */
-.trend-bar{background:linear-gradient(90deg,rgba(155,109,255,.07),rgba(245,200,66,.05),rgba(255,107,157,.07));border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:.6rem 0;overflow:hidden;position:relative}
+.trend-bar{background:linear-gradient(90deg,rgba(155,109,255,.07),rgba(245,200,66,.05));border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:.6rem 0;overflow:hidden;position:relative}
 .trend-bar::before,.trend-bar::after{content:'';position:absolute;top:0;bottom:0;width:80px;z-index:1;pointer-events:none}
 .trend-bar::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
 .trend-bar::after{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
@@ -88,14 +91,12 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .tname{font-weight:700;color:var(--text)}
 .tbadge{font-size:.63rem;background:var(--gold-dim);color:var(--gold);padding:.12rem .45rem;border-radius:50px}
 
-/* CITY BAR */
 .city-bar{display:flex;gap:.5rem;flex-wrap:wrap;padding:1.3rem 2rem .3rem;max-width:1200px;margin:0 auto}
 .cpill{background:var(--s1);border:1px solid var(--border);color:var(--text-dim);padding:.33rem .85rem;border-radius:50px;font-size:.76rem;font-weight:600;transition:all .25s}
 .cpill:hover{border-color:var(--border2)}
 .cpill.on{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
 
-/* FILTERS */
-.filters{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;margin:1rem 2rem;max-width:1200px;margin-left:auto;margin-right:auto;position:relative;overflow:hidden}
+.filters{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;margin:1rem auto;max-width:1200px;position:relative;overflow:hidden}
 .filters::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
 .frow{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start}
 .fgroup{display:flex;flex-direction:column;gap:.35rem;flex:1;min-width:130px}
@@ -105,7 +106,6 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .fpill:hover{border-color:var(--border2);color:var(--text)}
 .fpill.on{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
 
-/* MAIN */
 .main{padding:1.2rem 2rem 4rem;display:grid;grid-template-columns:1fr 295px;gap:2rem;max-width:1200px;margin:0 auto}
 .list-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
 .lcount{font-size:.8rem;color:var(--text-muted)}
@@ -116,7 +116,6 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .cbtn.on{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
 .rlist{display:flex;flex-direction:column;gap:.8rem}
 
-/* RESTAURANT CARD */
 .rcard{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.1rem;display:grid;grid-template-columns:70px 1fr auto;gap:1rem;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
 .rcard::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;background:var(--gold);transform:scaleY(0);transition:transform .3s;transform-origin:bottom}
 .rcard:hover{border-color:rgba(245,200,66,.2);background:var(--s2);transform:translateX(-3px)}
@@ -124,8 +123,7 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .rthumb{width:70px;height:70px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:2.1rem;flex-shrink:0;position:relative}
 .rrank{position:absolute;top:-4px;right:-4px;background:var(--gold);color:#09080A;font-size:.58rem;font-weight:900;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .rbody{min-width:0}
-.rname{font-size:.93rem;font-weight:800;margin-bottom:.28rem;display:flex;align-items:center;gap:.35rem}
-.verified{color:var(--blue);font-size:.72rem}
+.rname{font-size:.93rem;font-weight:800;margin-bottom:.28rem}
 .rmeta{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-bottom:.32rem}
 .rscore{font-size:.83rem;font-weight:800;color:var(--gold)}
 .rstars{color:var(--gold);font-size:.66rem;letter-spacing:1px}
@@ -152,12 +150,9 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .sbar-fill{height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:2px;transition:width .8s}
 .sbar-lbl{font-size:.58rem;color:var(--text-muted);text-align:center;margin-top:2px}
 
-/* SIDEBAR */
 .sidebar{position:sticky;top:5rem;height:fit-content;display:flex;flex-direction:column;gap:.9rem}
 .scard{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.1rem}
 .stitle{font-size:.83rem;font-weight:800;margin-bottom:.9rem;display:flex;align-items:center;gap:.4rem}
-
-/* AI */
 .ai-card{position:relative;overflow:hidden}
 .ai-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--purple),#FF6B9D,var(--gold))}
 .ai-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--purple);font-weight:700;margin-bottom:.5rem}
@@ -167,7 +162,7 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .ai-go{width:100%;background:linear-gradient(135deg,var(--purple),#7B4FE0);color:#fff;border:none;border-radius:10px;padding:.6rem;font-size:.8rem;font-weight:700;transition:all .3s}
 .ai-go:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(155,109,255,.3)}
 .ai-res{margin-top:.75rem;display:none}
-.ai-res.show{display:block;animation:fadeUp .4s ease}
+.ai-res.show{display:block}
 .ai-res-lbl{font-size:.68rem;color:var(--text-muted);margin-bottom:.45rem}
 .ai-match{background:var(--s2);border:1px solid rgba(155,109,255,.18);border-radius:10px;padding:.65rem;display:flex;align-items:center;gap:.55rem;cursor:pointer;transition:all .2s;margin-bottom:.4rem}
 .ai-match:hover{border-color:rgba(155,109,255,.4)}
@@ -179,8 +174,6 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .dots span:nth-child(2){animation-delay:.2s}
 .dots span:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
-
-/* COMPARE */
 .cmp-empty{font-size:.76rem;color:var(--text-muted);text-align:center;padding:.9rem;border:1px dashed var(--border);border-radius:10px}
 .cmp-item{display:flex;align-items:center;gap:.55rem;padding:.5rem;background:var(--s2);border-radius:10px;margin-bottom:.45rem}
 .cmp-emoji{font-size:1.05rem}
@@ -189,9 +182,6 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .cmp-rm{color:var(--text-muted);background:none;border:none;font-size:.82rem}
 .cmp-rm:hover{color:var(--red)}
 .cmp-go{width:100%;margin-top:.65rem;background:var(--purple);color:#fff;border:none;border-radius:10px;padding:.58rem;font-size:.78rem;font-weight:700;transition:all .3s;display:none}
-.cmp-go:hover{background:#8B5FEF}
-
-/* TOP */
 .topitem{display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all .2s}
 .topitem:last-child{border-bottom:none}
 .topitem:hover .topname{color:var(--gold)}
@@ -203,13 +193,11 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .topinfo{flex:1;min-width:0}
 .topname{font-size:.78rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
 .topmeta{font-size:.67rem;color:var(--gold)}
-/* STATS */
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
 .sbox{background:var(--s2);border-radius:10px;padding:.78rem;text-align:center}
 .snum{font-size:1.25rem;font-weight:900;color:var(--gold);display:block}
 .slbl{font-size:.65rem;color:var(--text-muted)}
 
-/* MODAL */
 .overlay{display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:1rem}
 .overlay.open{display:flex}
 .modal{background:var(--s1);border:1px solid var(--border);border-radius:20px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;animation:pop .38s cubic-bezier(.34,1.56,.64,1)}
@@ -253,8 +241,7 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .revname{font-size:.8rem;font-weight:700}
 .revstars{color:var(--gold);font-size:.72rem}
 .revtext{font-size:.78rem;color:var(--text-dim);line-height:1.7}
-.revfoot{display:flex;justify-content:space-between;align-items:center;margin-top:.38rem}
-.revdate{font-size:.65rem;color:var(--text-muted)}
+.revdate{font-size:.65rem;color:var(--text-muted);margin-top:.35rem}
 .addrev{background:var(--s2);border:1px dashed rgba(245,200,66,.2);border-radius:12px;padding:1rem}
 .addrev-title{font-size:.85rem;font-weight:700;margin-bottom:.8rem}
 .spicker{display:flex;gap:.28rem;margin-bottom:.8rem}
@@ -269,10 +256,9 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .rta{width:100%;background:var(--s1);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.65rem .85rem;font-size:.8rem;resize:none;outline:none;min-height:70px;transition:border-color .3s}
 .rta:focus{border-color:rgba(245,200,66,.4)}
 .rta::placeholder{color:var(--text-muted)}
+select.rta{min-height:42px;cursor:pointer}
 .rsubmit{width:100%;margin-top:.65rem;background:var(--gold);color:#09080A;border:none;border-radius:10px;padding:.65rem;font-size:.83rem;font-weight:800;transition:all .3s}
 .rsubmit:hover{background:var(--gold2)}
-
-/* COMPARE MODAL */
 .cmpmodal{max-width:680px}
 .cmpcols{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:.9rem}
 .cmpcol{background:var(--s2);border-radius:12px;padding:.9rem}
@@ -286,8 +272,6 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .cmpval{font-weight:700}
 .winner{color:var(--green)}
 .cmpfooter{margin-top:.9rem;padding:.75rem;background:var(--s2);border-radius:10px;font-size:.8rem;color:var(--text-dim);text-align:center}
-
-/* WISHLIST MODAL */
 .wlmodal{max-width:440px}
 .witem{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--s2);border-radius:10px;margin-bottom:.55rem}
 .wemoji{font-size:1.25rem}
@@ -297,15 +281,11 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .wrm{color:var(--text-muted);background:none;border:none;font-size:.88rem}
 .wrm:hover{color:var(--red)}
 .wempty{text-align:center;padding:2rem;color:var(--text-muted)}
-
-/* TOAST */
 .toast-wrap{position:fixed;bottom:1.8rem;left:50%;transform:translateX(-50%);z-index:1000;display:flex;flex-direction:column;gap:.4rem;align-items:center}
 .toast{background:var(--s2);border:1px solid var(--border);border-radius:50px;padding:.6rem 1.2rem;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:.45rem;white-space:nowrap;animation:tin .4s ease;box-shadow:0 8px 32px rgba(0,0,0,.4)}
 .toast.out{animation:tout .3s ease forwards}
 @keyframes tin{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes tout{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(16px)}}
-
-/* LOADING */
 .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:1rem}
 .spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -314,15 +294,6 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 .empty-icon{font-size:2.8rem;margin-bottom:.7rem}
 .empty-title{font-size:.93rem;font-weight:700;color:var(--text-dim);margin-bottom:.3rem}
 .empty-sub{font-size:.78rem;color:var(--text-muted)}
-
-@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-.hero{animation:fadeUp .6s ease}
-/* FIREBASE STATUS */
-.fb-status{display:inline-flex;align-items:center;gap:.35rem;font-size:.68rem;padding:.2rem .6rem;border-radius:50px}
-.fb-status.ok{background:rgba(61,214,140,.1);color:var(--green)}
-.fb-status.err{background:rgba(255,87,87,.1);color:var(--red)}
-.fb-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
-
 @media(max-width:900px){
   .hero{grid-template-columns:1fr;padding:6rem 1.2rem 2rem}
   .hero-right{display:none}
@@ -335,7 +306,6 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
 </style>
 </head>
 <body>
-
 <nav>
   <div class="logo" onclick="resetAll()">
     <div class="logo-icon">🍽️</div>
@@ -344,24 +314,20 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
   <div class="nav-search">
     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <input type="text" id="searchInput" placeholder="ابحث عن مطعم، قسم، أو منطقة..." oninput="applyFilters()">
-    <button class="search-btn">
-      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    </button>
   </div>
   <div class="nav-acts">
-    <span id="fbStatus" class="fb-status"><span class="fb-dot"></span>جاري الاتصال...</span>
+    <span id="fbStatus" class="fb-status"><span class="fb-dot"></span> جاري الاتصال...</span>
     <button class="nbtn" onclick="openWishlist()">💾 المحفوظة <span class="wcount" id="wcount" style="display:none">0</span></button>
     <button class="nbtn gold" onclick="openAddModal()">+ أضف مطعم</button>
   </div>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
   <div class="hero-glow"></div>
   <div>
-    <div class="hero-pill"><div class="pulse"></div>مباشر · <span id="liveCount">...</span> مطعم مسجل</div>
+    <div class="hero-pill"><div class="pulse"></div>مباشر · <span id="liveCount">...</span> مطعم</div>
     <h1>دليلك للأكل<br><span class="gold">الحقيقي</span> في مصر</h1>
-    <p class="hero-desc">آراء حقيقية من ناس جربوا — مش إعلانات. اعرف المطعم قبل ما تروحله وتضيع فلوسك.</p>
+    <p class="hero-desc">آراء حقيقية من ناس جربوا — مش إعلانات. اعرف المطعم قبل ما تروحله.</p>
     <div class="hero-stats">
       <div><span class="hstat-num" id="hRests">...</span><span class="hstat-lbl">مطعم</span></div>
       <div><span class="hstat-num" id="hRevs">...</span><span class="hstat-lbl">تقييم</span></div>
@@ -385,14 +351,10 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
   </div>
 </section>
 
-<!-- TRENDING -->
-<div class="trend-bar"><div class="trend-track" id="trendTrack">جاري التحميل...</div></div>
-
-<!-- CITY -->
+<div class="trend-bar"><div class="trend-track" id="trendTrack">🔥 جاري التحميل...</div></div>
 <div class="city-bar" id="cityBar"></div>
 
-<!-- FILTERS -->
-<div class="filters" style="margin-top:.8rem">
+<div class="filters" style="margin:1rem 2rem">
   <div class="frow">
     <div class="fgroup">
       <div class="flbl">القسم</div>
@@ -405,3 +367,359 @@ nav{position:fixed;top:0;width:100%;z-index:500;padding:.85rem 2rem;display:flex
         <button class="fpill" onclick="setF(this,'budget','cheap')">💚 اقتصادي</button>
         <button class="fpill" onclick="setF(this,'budget','mid')">💛 متوسط</button>
         <button class="fpill" onclick="setF(this,'budget','high')">💜 فاخر</button>
+      </div>
+    </div>
+    <div class="fgroup">
+      <div class="flbl">المناسبة</div>
+      <div class="fpills">
+        <button class="fpill on" onclick="setF(this,'occ','all')">الكل</button>
+        <button class="fpill" onclick="setF(this,'occ','family')">👨‍👩‍👧 عيلة</button>
+        <button class="fpill" onclick="setF(this,'occ','romantic')">💑 رومانسي</button>
+        <button class="fpill" onclick="setF(this,'occ','work')">💼 شغل</button>
+      </div>
+    </div>
+    <div class="fgroup" style="max-width:110px">
+      <div class="flbl">الحالة</div>
+      <div class="fpills">
+        <button class="fpill on" onclick="setF(this,'status','all')">الكل</button>
+        <button class="fpill" onclick="setF(this,'status','open')">🟢 مفتوح</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div>
+    <div class="list-top">
+      <div class="lcount"><strong id="rCount">0</strong> مطعم</div>
+<div class="lctrls">
+        <button class="cbtn on" onclick="setSort('rating',this)">⭐ الأعلى تقييماً</button>
+        <button class="cbtn" onclick="setSort('reviews',this)">💬 الأكتر تقييمات</button>
+        <button class="cbtn" onclick="setSort('new',this)">🆕 الأحدث</button>
+      </div>
+    </div>
+    <div class="rlist" id="rList">
+      <div class="loading"><div class="spinner"></div><div class="loading-txt">جاري الاتصال بـ Firebase...</div></div>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="scard ai-card">
+      <div class="ai-lbl">✨ AI Flavor Matcher</div>
+      <div class="stitle">قولي بتحب إيه</div>
+      <textarea class="ai-ta" id="aiInput" placeholder="مثال: حاجة رخيصة وسريعة، أو مطعم سمك هادي..."></textarea>
+      <button class="ai-go" onclick="runAI()">🔍 ابحث بالذكاء الاصطناعي</button>
+      <div class="ai-res" id="aiRes"></div>
+    </div>
+    <div class="scard">
+      <div class="stitle">⚖️ قارن بين مطعمين</div>
+      <div id="cmpZone"><div class="cmp-empty">اضغط 🔀 في أي مطعم لإضافته</div></div>
+      <button class="cmp-go" id="cmpGoBtn" onclick="openCompare()">قارن دلوقتي →</button>
+    </div>
+    <div class="scard">
+      <div class="stitle">🏆 الأعلى تقييماً</div>
+      <div id="topList"></div>
+    </div>
+    <div class="scard">
+      <div class="stitle">📊 إحصائيات</div>
+      <div class="sgrid">
+        <div class="sbox"><span class="snum" id="sTot">—</span><div class="slbl">مطعم</div></div>
+        <div class="sbox"><span class="snum" id="sRev">—</span><div class="slbl">تقييم</div></div>
+        <div class="sbox"><span class="snum" id="sCat">—</span><div class="slbl">قسم</div></div>
+        <div class="sbox"><span class="snum" id="sAvg">—</span><div class="slbl">متوسط</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="rModal"><div class="modal" id="rModalContent"></div></div>
+<div class="overlay" id="cmpModal"><div class="modal cmpmodal" id="cmpContent"></div></div>
+<div class="overlay" id="wlModal"><div class="modal wlmodal" id="wlContent"></div></div>
+<div class="overlay" id="addModal">
+  <div class="modal" style="max-width:460px">
+    <div class="mhead">
+      <button class="mx" onclick="closeO('addModal')">×</button>
+      <div class="memoji">🍽️</div>
+      <div class="mname">أضف مطعم جديد</div>
+      <div class="msub">بياناته هتتحفظ فوراً للجميع 🔥</div>
+    </div>
+    <div class="mbody">
+      <input type="text" id="addName" class="rta" style="min-height:42px;margin-bottom:.7rem" placeholder="اسم المطعم *">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.7rem">
+        <select id="addCat" class="rta">
+          <option value="">القسم *</option>
+          <option>مشاوي</option><option>مأكولات بحرية</option><option>فاست فود</option>
+          <option>شرقي</option><option>بيتزا وباستا</option><option>حلويات</option>
+          <option>كافيه</option><option>آسيوي</option><option>مطعم</option>
+        </select>
+        <select id="addCity" class="rta">
+          <option value="">المدينة *</option>
+          <option>القاهرة</option><option>الإسكندرية</option><option>الجيزة</option>
+          <option>المنصورة</option><option>طنطا</option><option>الإسماعيلية</option>
+        </select>
+      </div>
+      <input type="text" id="addAddr" class="rta" style="min-height:42px;margin-bottom:.7rem" placeholder="العنوان *">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.9rem">
+        <select id="addBudget" class="rta">
+          <option value="mid">الميزانية</option>
+          <option value="cheap">اقتصادي</option>
+          <option value="mid">متوسط</option>
+          <option value="high">فاخر</option>
+        </select>
+        <select id="addOcc" class="rta">
+          <option value="family">المناسبة</option>
+<option value="family">عيلة</option>
+          <option value="romantic">رومانسي</option>
+          <option value="work">شغل</option>
+          <option value="friends">أصدقاء</option>
+        </select>
+      </div>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:.5rem">تقييمك الأول ⭐</div>
+      <div class="spicker" id="addStarPicker">
+        <button class="sbtn" onclick="setAS(1)">★</button>
+        <button class="sbtn" onclick="setAS(2)">★</button>
+        <button class="sbtn" onclick="setAS(3)">★</button>
+        <button class="sbtn" onclick="setAS(4)">★</button>
+        <button class="sbtn" onclick="setAS(5)">★</button>
+      </div>
+      <textarea class="rta" id="addRevTa" placeholder="اكتب تجربتك..."></textarea>
+      <button class="rsubmit" onclick="submitAdd()">أضف المطعم للدليل ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ══════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════
+var firebaseConfig = {
+  apiKey: "AIzaSyB2xA1ljjkZ59BQ1B_1LGXaS33O4o1w_80",
+  authDomain: "qaimni1.firebaseapp.com",
+  projectId: "qaimni1",
+  storageBucket: "qaimni1.firebasestorage.app",
+  messagingSenderId: "362968663808",
+  appId: "1:362968663808:web:20d88cca1a6b70ad25d5e5"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
+// ══════════════════════════════
+// SEED DATA
+// ══════════════════════════════
+var SEED = [
+  {name:'كباب هاني بدر',cat:'مشاوي',city:'القاهرة',emoji:'🥩',open:true,budget:'mid',occ:['family'],isNew:false,isHot:true,addr:'شارع مكرم عبيد، مدينة نصر',reviews:[{n:'طارق ف.',s:5,text:'أحلى كباب في مدينة نصر! اللحمة طازة.',d:'منذ يومين',food:5,service:5,clean:4,price:4},{n:'ريم أ.',s:5,text:'المكان نظيف والخدمة ممتازة.',d:'منذ 4 أيام',food:5,service:5,clean:5,price:4}]},
+  {name:'مطعم سيمافرو',cat:'مأكولات بحرية',city:'القاهرة',emoji:'🦞',open:true,budget:'high',occ:['romantic','family'],isNew:false,isHot:true,addr:'كورنيش المعادي، القاهرة',reviews:[{n:'منى ر.',s:5,text:'السمك طازة والمكان على النيل، جو خيالي!',d:'منذ يومين',food:5,service:5,clean:5,price:3},{n:'إياد م.',s:5,text:'أحسن مطعم سمك في القاهرة.',d:'منذ أسبوع',food:5,service:4,clean:5,price:3}]},
+  {name:'كافيه أتيليه الزمالك',cat:'كافيه',city:'القاهرة',emoji:'☕',open:true,budget:'mid',occ:['work','romantic'],isNew:false,isHot:false,addr:'شارع 26 يوليو، الزمالك',reviews:[{n:'لمى س.',s:5,text:'جو هادي رائع للشغل، القهوة خرافية.',d:'اليوم',food:5,service:5,clean:5,price:4}]},
+  {name:'كنافة الشيخ حسن',cat:'حلويات',city:'القاهرة',emoji:'🍰',open:true,budget:'cheap',occ:['family','friends'],isNew:false,isHot:true,addr:'شارع الأزهر، وسط البلد',reviews:[{n:'فريدة ع.',s:5,text:'أحسن كنافة في القاهرة! الجبنة عمارتي.',d:'منذ يومين',food:5,service:4,clean:3,price:5}]},
+  {name:'مطعم البيك',cat:'فاست فود',city:'الجيزة',emoji:'🍔',open:true,budget:'mid',occ:['friends','family'],isNew:true,isHot:true,addr:'شارع الملك فيصل، الجيزة',reviews:[{n:'إسلام م.',s:5,text:'الدجاج المقلي لذيذ جداً!',d:'اليوم',food:5,service:4,clean:4,price:4}]},
+  {name:'مطعم المينا للمأكولات البحرية',cat:'مأكولات بحرية',city:'الإسكندرية',emoji:'🦞',open:true,budget:'mid',occ:['family','romantic'],isNew:false,isHot:true,addr:'كورنيش سيدي بشر، الإسكندرية',reviews:[{n:'هاني م.',s:5,text:'السمك طازة والجمبري خرافي!',d:'أمس',food:5,service:5,clean:5,price:4}]},
+  {name:'كافيه بلانش',cat:'كافيه',city:'الإسكندرية',emoji:'☕',open:true,budget:'high',occ:['romantic','work'],isNew:true,isHot:false,addr:'شارع الميناء الشرقي، الإسكندرية',reviews:[{n:'دينا ر.',s:5,text:'إطلالة على البحر والقهوة ممتازة.',d:'منذ يومين',food:4,service:5,clean:5,price:3}]},
+  {name:'مطعم الديوان',cat:'مشاوي',city:'المنصورة',emoji:'🥩',open:true,budget:'mid',occ:['family'],isNew:false,isHot:true,addr:'ميدان الساعة، المنصورة',reviews:[{n:'محمود ص.',s:5,text:'أحسن مشاوي في المنصورة!',d:'منذ يومين',food:5,service:5,clean:4,price:4}]},
+{name:'مطعم القناة',cat:'مأكولات بحرية',city:'الإسماعيلية',emoji:'🦞',open:true,budget:'high',occ:['romantic','family'],isNew:false,isHot:true,addr:'كورنيش القناة، الإسماعيلية',reviews:[{n:'فتحي م.',s:5,text:'مطعم على قناة السويس والأكل خرافي!',d:'منذ يومين',food:5,service:5,clean:5,price:3}]},
+  {name:'حلويات الشهاوي',cat:'حلويات',city:'طنطا',emoji:'🍰',open:true,budget:'cheap',occ:['family','friends'],isNew:false,isHot:false,addr:'شارع البحر، طنطا',reviews:[{n:'أسماء ك.',s:5,text:'كنافة الشهاوي مشهورة من زمان.',d:'أمس',food:5,service:4,clean:4,price:5}]},
+];
+
+function seedIfEmpty() {
+  db.collection('restaurants').get().then(function(snap) {
+    if (snap.empty) {
+      var batch = db.batch();
+      SEED.forEach(function(r) {
+        var ref = db.collection('restaurants').doc();
+        batch.set(ref, r);
+      });
+      batch.commit().then(function() {
+        console.log('Seed done!');
+      });
+    }
+  });
+}
+
+// ══════════════════════════════
+// STATE
+// ══════════════════════════════
+var ALL = [], activeCity = 'القاهرة', activeCat = 'all';
+var activeFilters = {budget:'all', occ:'all', status:'all'};
+var sortMode = 'rating', wishlist = {}, compareSet = [];
+var addStarV = 0, selRevStars = 0, subRevStars = {};
+var MOODS = [
+  {id:'hungry', emoji:'😋', label:'جعان أوي',  cats:['مشاوي','فاست فود']},
+  {id:'romantic',emoji:'💑',label:'رومانسي',   cats:['كافيه','مأكولات بحرية']},
+  {id:'fast',   emoji:'⚡', label:'مستعجل',    cats:['فاست فود','شرقي']},
+  {id:'healthy',emoji:'🥗', label:'صحي',       cats:['مأكولات بحرية','شرقي']},
+  {id:'sweet',  emoji:'🍰', label:'حلو',       cats:['حلويات','كافيه']},
+  {id:'vibes',  emoji:'✨', label:'جو وأجواء', cats:['كافيه','مأكولات بحرية']},
+];
+var CITIES = ['القاهرة','الإسكندرية','الجيزة','المنصورة','طنطا','الإسماعيلية'];
+
+// ══════════════════════════════
+// HELPERS
+// ══════════════════════════════
+function starsH(n) { var r=Math.round(n||0); return '★'.repeat(r)+'☆'.repeat(5-r); }
+function avgR(r) { var rv=r.reviews||[]; return rv.length ? +(rv.reduce(function(s,v){return s+v.s;},0)/rv.length).toFixed(1) : 0; }
+function avgSub(r,f) { var rv=(r.reviews||[]).filter(function(v){return v[f]!=null;}); return rv.length ? +(rv.reduce(function(s,v){return s+v[f];},0)/rv.length).toFixed(1) : 0; }
+function catEmoji(c) { var m={'مشاوي':'🥩','مأكولات بحرية':'🦞','فاست فود':'🍔','شرقي':'🫕','بيتزا وباستا':'🍕','حلويات':'🍰','كافيه':'☕','آسيوي':'🍜','مطعم':'🍽️'}; return m[c]||'🍴'; }
+function catBg(c) { var m={'مشاوي':'#2A1A0A','مأكولات بحرية':'#0A1525','فاست فود':'#1A1A0A','شرقي':'#1A0A0A','بيتزا وباستا':'#2A160A','حلويات':'#1A0A1A','كافيه':'#0F0A07','آسيوي':'#0A1A1A','مطعم':'#131118'}; return m[c]||'#131118'; }
+function priceL(b) { return {cheap:'💚 اقتصادي',mid:'💛 متوسط',high:'💜 فاخر'}[b]||''; }
+function toast(msg, icon) {
+  icon = icon || '✓';
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = icon + ' ' + msg;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(function() { el.classList.add('out'); setTimeout(function(){el.remove();},400); }, 2500);
+}
+function setFbStatus(ok) {
+  var el = document.getElementById('fbStatus');
+  el.className = 'fb-status ' + (ok ? 'fb-ok' : 'fb-err');
+  el.innerHTML = '<span class="fb-dot"></span> ' + (ok ? 'متصل بـ Firebase ✓' : 'خطأ في الاتصال');
+}
+
+// ══════════════════════════════
+// FIRESTORE LISTENER
+// ══════════════════════════════
+function startListener() {
+  db.collection('restaurants').onSnapshot(function(snap) {
+    ALL = snap.docs.map(function(d) { return Object.assign({id: d.id}, d.data()); });
+    setFbStatus(true);
+    buildTrending(); buildMoods(); buildCities(); buildCatPills();
+    applyFilters(); buildSidebar();
+    var totalRevs = ALL.reduce(function(s,r){return s+(r.reviews||[]).length;},0);
+document.getElementById('liveCount').textContent = ALL.length;
+    document.getElementById('hRests').textContent = ALL.length;
+    document.getElementById('hRevs').textContent = totalRevs;
+  }, function(err) {
+    setFbStatus(false);
+    document.getElementById('rList').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">خطأ في الاتصال</div><div class="empty-sub">' + err.message + '</div></div>';
+  });
+}
+
+// ══════════════════════════════
+// BUILD UI
+// ══════════════════════════════
+function buildTrending() {
+  var top = ALL.slice().sort(function(a,b){return avgR(b)-avgR(a);}).slice(0,8);
+  var html = top.map(function(r){return '<span class="titem">🔥 <span class="tname">'+r.name+'</span><span class="tbadge">⭐'+avgR(r)+'</span></span>';}).join('');
+  document.getElementById('trendTrack').innerHTML = html + html;
+}
+function buildMoods() {
+  document.getElementById('moodGrid').innerHTML = MOODS.map(function(m){
+    return '<button class="mbtn" onclick="pickMood(\''+m.id+'\')" data-mood="'+m.id+'"><div class="mbtn-emoji">'+m.emoji+'</div><div class="mbtn-lbl">'+m.label+'</div></button>';
+  }).join('');
+}
+function pickMood(id) {
+  document.querySelectorAll('.mbtn').forEach(function(b){b.classList.toggle('on',b.dataset.mood===id);});
+  var mood = MOODS.find(function(m){return m.id===id;});
+  var best = ALL.filter(function(r){return r.city===activeCity && mood.cats.indexOf(r.cat)>-1;}).sort(function(a,b){return avgR(b)-avgR(a);})[0];
+  if (best) {
+    document.getElementById('moodSug').innerHTML = best.emoji+' '+best.name+' <span style="font-size:.7rem;color:var(--text-muted)">⭐'+avgR(best)+'</span>';
+    document.getElementById('moodSug').onclick = function(){openModal(best.id);};
+    document.getElementById('moodRes').classList.add('show');
+  }
+}
+function buildCities() {
+  document.getElementById('cityBar').innerHTML = CITIES.map(function(c){
+    return '<button class="cpill '+(c===activeCity?'on':'')+'" onclick="setCity(\''+c+'\')">'+c+'</button>';
+  }).join('');
+}
+function setCity(c) { activeCity=c; activeCat='all'; buildCities(); buildCatPills(); applyFilters(); buildSidebar(); }
+function buildCatPills() {
+  var cats = ['all'].concat(Array.from(new Set(ALL.filter(function(r){return r.city===activeCity;}).map(function(r){return r.cat;}))));
+  document.getElementById('catPills').innerHTML = cats.map(function(c){
+    return '<button class="fpill '+(c===activeCat?'on':'')+'" onclick="setCat(this,\''+c+'\')">'+(c==='all'?'الكل':catEmoji(c)+' '+c)+'</button>';
+  }).join('');
+}
+function setCat(el,cat) { activeCat=cat; document.querySelectorAll('#catPills .fpill').forEach(function(b){b.classList.remove('on');}); el.classList.add('on'); applyFilters(); }
+function setF(el,key,val) { activeFilters[key]=val; el.closest('.fpills').querySelectorAll('.fpill').forEach(function(b){b.classList.remove('on');}); el.classList.add('on'); applyFilters(); }
+function setSort(mode,el) { sortMode=mode; document.querySelectorAll('.cbtn').forEach(function(b){b.classList.remove('on');}); el.classList.add('on'); applyFilters(); }
+function resetAll() { activeCity='القاهرة'; activeCat='all'; activeFilters={budget:'all',occ:'all',status:'all'}; document.getElementById('searchInput').value=''; buildCities(); buildCatPills(); applyFilters(); buildSidebar(); }
+
+function applyFilters() {
+  var q = document.getElementById('searchInput').value.toLowerCase().trim();
+  var list = ALL.filter(function(r) {
+    if (r.city !== activeCity) return false;
+    if (activeCat !== 'all' && r.cat !== activeCat) return false;
+    if (activeFilters.budget !== 'all' && r.budget !== activeFilters.budget) return false;
+    if (activeFilters.occ !== 'all' && (r.occ||[]).indexOf(activeFilters.occ) === -1) return false;
+    if (activeFilters.status === 'open' && !r.open) return false;
+if (q && r.name.indexOf(q)===-1 && (r.addr'').indexOf(q)===-1) return false;
+    return true;
+  });
+  if (sortMode==='rating') list.sort(function(a,b){return avgR(b)-avgR(a);});
+  else if (sortMode==='reviews') list.sort(function(a,b){return (b.reviews[]).length;});
+  else list.sort(function(a,b){return (b.isNew?1:0)-(a.isNew?1:0);});
+  renderList(list);
+}
+
+function renderList(list) {
+  document.getElementById('rCount').textContent = list.length;
+  var el = document.getElementById('rList');
+  if (!list.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">مفيش نتائج</div><div class="empty-sub">جرب فلتر تاني</div></div>'; return; }
+  el.innerHTML = list.map(function(r,i) {
+    var rating=avgR(r), revs=r.reviews||[], latest=revs[0];
+    var saved=!!wishlist[r.id], inCmp=compareSet.some(function(x){return x.id===r.id;});
+    return '<div class="rcard" onclick="openModal(\''+r.id+'\')">'+
+      '<div class="rthumb" style="background:'+catBg(r.cat)+'">'+r.emoji+(i<3?'<div class="rrank">'+(i+1)+'</div>':'')+'</div>'+
+      '<div class="rbody">'+
+        '<div class="rname">'+r.name+' <span style="color:var(--blue);font-size:.72rem">✓</span></div>'+
+        '<div class="rmeta"><span class="rscore">⭐ '+rating+'</span><span class="rstars">'+starsH(rating)+'</span><span class="rdot">·</span><span class="rrevs">'+revs.length+' تقييم</span><span class="rdot">·</span><span class="rcat">'+r.cat+'</span><span class="rdot">·</span><span class="rprice">'+priceL(r.budget)+'</span></div>'+
+        '<div class="raddr">📍 '+(r.addr||'')+'</div>'+
+        '<div class="rbadges"><span class="rb '+(r.open?'rb-open':'rb-closed')+'">'+(r.open?'🟢 مفتوح':'🔴 مغلق')+'</span>'+(r.isHot?'<span class="rb rb-hot">🔥 الأكتر طلباً</span>':'')+(r.isNew?'<span class="rb rb-new">🆕 جديد</span>':'')+(i===0?'<span class="rb rb-top">👑 الأفضل</span>':'')+'</div>'+
+        (latest?'<div class="rlast"><strong>آخر تقييم · </strong>'+latest.text.substring(0,88)+'...</div>':'')+
+      '</div>'+
+      '<div class="racts" onclick="event.stopPropagation()">'+
+        '<div style="display:flex;flex-direction:column;gap:.35rem">'+
+          '<button class="abt '+(saved?'on':'')+'" onclick="toggleWish(\''+r.id+'\')" title="احفظ">💾</button>'+
+          '<button class="abt cmp '+(inCmp?'on':'')+'" onclick="toggleCmp(\''+r.id+'\')" title="قارن">🔀</button>'+
+        '</div>'+
+        '<div class="sbar-wrap"><div class="sbar-track"><div class="sbar-fill" style="width:'+(rating/5*100)+'%"></div></div><div class="sbar-lbl">'+rating+'/5</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function buildSidebar() {
+  var cr = ALL.filter(function(r){return r.city===activeCity;});
+  var totalR = cr.reduce(function(s,r){return s+(r.reviews||[]).length;},0);
+  var cats = new Set(cr.map(function(r){return r.cat;})).size;
+  var avg = cr.length ? (cr.reduce(function(s,r){return s+avgR(r);},0)/cr.length).toFixed(1) : '0';
+  document.getElementById('sTot').textContent = ALL.length;
+  document.getElementById('sRev').textContent = ALL.reduce(function(s,r){return s+(r.reviews||[]).length;},0);
+  document.getElementById('sCat').textContent = cats;
+  document.getElementById('sAvg').textContent = avg;
+  var top = cr.slice().sort(function(a,b){return avgR(b)-avgR(a);}).slice(0,5);
+  document.getElementById('topList').innerHTML = top.map(function(r,i){
+    return '<div class="topitem" onclick="openModal(\''+r.id+'\')"><div class="toprank">'+(i+1)+'</div><div class="topemoji">'+r.emoji+'</div><div class="topinfo"><div class="topname">'+r.name+'</div><div class="topmeta">⭐'+avgR(r)+' · '+(r.reviews||[]).length+' تقييم</div></div></div>';
+  }).join('');
+}
+
+function toggleWish(id) {
+  if (wishlist[id]) { delete wishlist[id]; toast('تم الحذف من المحفوظات','🗑️'); }
+else { wishlist[id]=true; toast('تم الحفظ!','💾'); }
+  var cnt=document.getElementById('wcount');
+  var size=Object.keys(wishlist).length;
+  if(size){cnt.style.display='flex';cnt.textContent=size;}else{cnt.style.display='none';}
+  applyFilters();
+}
+function openWishlist() {
+  var items = Object.keys(wishlist).map(function(id){return ALL.find(function(r){return r.id===id;});}).filter(Boolean);
+  document.getElementById('wlContent').innerHTML = '<div class="mhead"><button class="mx" onclick="closeO(\'wlModal\')">×</button><div class="memoji">💾</div><div class="mname">المحفوظة</div><div class="msub">'+items.length+' مطعم</div></div><div class="mbody">'+(items.length?items.map(function(r){return '<div class="witem"><div class="wemoji">'+r.emoji+'</div><div class="winfo"><div class="wname">'+r.name+'</div><div class="wmeta">⭐'+avgR(r)+' · '+r.cat+' · '+r.city+'</div></div><button class="wrm" onclick="toggleWish(\''+r.id+'\');openWishlist()">🗑️</button></div>';}).join(''):'<div class="wempty">📭 مفيش محفوظات</div>')+'</div>';
+  document.getElementById('wlModal').classList.add('open');
+}
+
+function toggleCmp(id) {
+  var r = ALL.find(function(x){return x.id===id;});
+  if (compareSet.some(function(x){return x.id===id;})) { compareSet=compareSet.filter(function(x){return x.id!==id;}); toast('تم الحذف من المقارنة','✕'); }
+  else { if(compareSet.length>=2){toast('اختار مطعمين بس','⚠️');return;} compareSet.push(r); toast(r.name+' اتضاف للمقارنة','🔀'); }
+  renderCmpZone(); applyFilters();
+}
+function renderCmpZone() {
+  var zone=document.getElementById('cmpZone'), btn=document.getElementById('cmpGoBtn');
+  zone.innerHTML = compareSet.length ? compareSet.map(function(r){return '<div class="cmp-item"><div class="cmp-emoji">'+r.emoji+'</div><div class="cmp-name">'+r.name+'</div><div class="cmp-score">⭐'+avgR(r)+'</div><button class="cmp-rm" onclick="toggleCmp(\''+r.id+'\')">✕</button></div>';}).join('') : '<div class="cmp-empty">اضغط 🔀 في أي مطعم</div>';
+  btn.style.display = compareSet.length===2 ? 'block' : 'none';
+}
+function openCompare() {
+  if(compareSet.length<2){toast('اختار مطعمين','⚠️');return;}
+  var a=compareSet[0], b=compareSet[1];
+  var fields=[{l:'التقييم الكلي',va:avgR(a),vb:avgR(b),num:true},{l:'جودة الأكل',va:avgSub(a,'food'),vb:avgSub(b,'food'),num:true},{l:'الخدمة',va:avgSub(a,'service'),vb:avgSub(b,'service'),num:true},{l:'النظافة',va:avgSub(a,'clean'),vb:avgSub(b,'clean'),num:true},{l:'عدد التقييمات',va:(a.reviews[]).length,num:true},{l:'الميزانية',va:priceL(a.budget),vb:priceL(b.budget),num:false},{l:'الحالة',va:a.open?'🟢 مفتوح':'🔴 مغلق',vb:b.open?'🟢 مفتوح':'🔴 مغلق',num:false}];
+  document.getElementById('cmpContent').innerHTML = '<div class="mhead"><button class="mx" onclick="closeO(\'cmpModal\')">×</button><div class="memoji">⚖️</div><div class="mname">مقارنة المطاعم</div></div><div class="mbody"><div class="cmpcols"><div class="cmpcol"><div class="cmphead"><div class="cmpemoji">'+a.emoji+'</div><div class="cmpname">'+a.name+'</div><div class="cmpscore">'+avgR(a)+'</div></div>'+fields.map(function(f){return '<div class="cmprow"><div class="cmplbl">'+f.l+'</div><div class="cmpval '+(f.num&&typeof f.va==='number'&&f.va>f.vb?'winner':'')+'">'+(f.va)+'</div></div>';}).join('')+'</div><div class="cmpcol"><div class="cmphead"><div class="cmpemoji">'+b.emoji+'</div><div class="cmpname">'+b.name+'</div><div class="cmpscore">'+avgR(b)+'</div></div>'+fields.map(function(f){return '<div class="cmprow"><div class="cmplbl">'+f.l+'</div><div class="cmpval '+(f.num&&typeof f
